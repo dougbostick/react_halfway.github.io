@@ -190,7 +190,7 @@ function App() {
     try {
       await axios
         .get(
-          `https://protected-brook-77403.herokuapp.com/https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat}%2C${lng}&radius=500&type=restaurant&key=AIzaSyD-WH-LKszQqhEgiEEcjqdc2v3OBmcPBd0`
+          `https://protected-brook-77403.herokuapp.com/https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat}%2C${lng}&radius=500&type=restaurant&key=${process.env.REACT_APP_API_KEY}`
         )
         .then((response) => {
           console.log(response.data);
