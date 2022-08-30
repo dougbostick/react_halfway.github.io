@@ -100,7 +100,7 @@ function App() {
   useEffect(() => {
     if (map) {
       const control = document.getElementById('floating-panel');
-      map.controls[window.google.maps.ControlPosition.TOP_CENTER].push(control);
+      map.controls[window.google.maps.ControlPosition.BOTTOM_RIGHT].push(control);
     }
   }, [map]);
 
@@ -249,19 +249,35 @@ const nearByPlacesDiv = nearByPlaces?.map((place) => {
 })
   return (
     <div className="App">
-      <input id="origin-input" placeholder="Location 1" />
-      <input id="destination-input" placeholder="Location 2" />
-      <button onClick={()=>calculateAndDisplayRoute(directionsService, directionsRender)}>
-        Halfway Point
-      </button>
-      <button onClick={()=>findPlaces(lastLat, lastLng)}>
-        Find Places
-      </button>
-      <div className="nearby-places-div" style={{alignContent: "right"}}>
-        {nearByPlacesDiv}
+      <div className="nav">
+        Logo
       </div>
-      <div id="map" style={{height: '500px', width: '500px'}}></div>
-      <div id="floating-panel"></div>
+     
+      <div id="container">
+   
+      <div id="map"/>
+       
+      
+        <div id="floating-panel">
+          <input id="origin-input" placeholder="Location 1" />
+          <input id="destination-input" placeholder="Location 2" />
+          <button 
+            id='get_route'
+            onClick={()=>calculateAndDisplayRoute(directionsService, directionsRender)}
+            >
+           Halfway Point
+          </button>
+          <button 
+            id='find_places'
+            onClick={()=>findPlaces(lastLat, lastLng)}
+            >
+            Find Places
+          </button>
+        </div>
+          <div id="places">
+           {nearByPlacesDiv}
+         </div>
+      </div>
       {/* <Inputs />
       <MapPannel /> */}
     </div>
