@@ -137,7 +137,7 @@ h1 {
   align-content: center;
   line-height: 400px;
 }
-/* 
+
 #places > div {
   display: flex;
   font-family: "Quicksand", sans-serif;
@@ -147,7 +147,10 @@ h1 {
   align-items: center;
   font-weight: bold;
   font-size: 1.5rem;
-} */
+}
+.place_results > div >  a {
+  margin: 8px;
+}
 
 button {
   background-color: #f7b500;

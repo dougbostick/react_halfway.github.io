@@ -9,7 +9,7 @@ function App() {
   const [directionsRender, setDirRender] = useState(null);
   const [lastLat, setLastLat] = useState(0);
   const [lastLng, setLastLng] = useState(0);
-  const nearByPlaces = []
+  const [nearByPlaces, setNearByPlaces] = useState([]);
 
 
 // console.log('dest, origin', dest, origin)
@@ -97,12 +97,12 @@ function App() {
   }, []);
 
 
-  useEffect(() => {
-    if (map) {
-      const control = document.getElementById('floating-panel');
-      map.controls[window.google.maps.ControlPosition.BOTTOM_RIGHT].push(control);
-    }
-  }, [map]);
+  // useEffect(() => {
+  //   if (map) {
+  //     const control = document.getElementById('floating-panel');
+  //     map.controls[window.google.maps.ControlPosition.BOTTOM_RIGHT].push(control);
+  //   }
+  // }, [map]);
 
 
 
@@ -135,21 +135,21 @@ function App() {
         travelMode: window.google.maps.TravelMode.WALKING,
       })
       .then((response) => {
-        console.log('response', response);
+        // console.log('response', response);
         const steps = response.routes[0].legs[0].steps;
         const distance = response.routes[0].legs[0].distance.value;
         const half = distance / 2;
         let newSteps = findLastStep(half, steps);
         // console.log(distance, half);
         // console.log(steps);
-        console.log(newSteps);
+       // console.log(newSteps);
   
         response.routes[0].legs[0].steps = newSteps;
         //console.log(destination);
         const last = newSteps[newSteps.length - 1];
-        console.log('last', last);
-        console.log('last lat', last.start_location.lat());
-        console.log('last lat', last.start_location.lng());
+        // console.log('last', last);
+        // console.log('last lat', last.start_location.lat());
+        // console.log('last lat', last.start_location.lng());
         setLastLat(last.start_location.lat());
         setLastLng(last.start_location.lng());
         // window.localStorage.setItem('lastLat', JSON.stringify(lastLat));
@@ -193,7 +193,7 @@ function App() {
           `https://protected-brook-77403.herokuapp.com/https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat}%2C${lng}&radius=500&type=restaurant&key=${process.env.REACT_APP_API_KEY}`
         )
         .then((response) => {
-          console.log(response.data);
+          //console.log(response.data);
           const places = response.data.results;
           const service = new window.google.maps.places.PlacesService(map);
           places.forEach((place) => {
@@ -206,14 +206,14 @@ function App() {
 
             function callback(_place, status) {
               if (status == window.google.maps.places.PlacesServiceStatus.OK) {
-                console.log('place', place);
+                //console.log('place', place);
                 let nearByPlace = {
                   name: place.name,
                   url: _place.url,
                   website: _place.website,
                 }
-                nearByPlaces.push(nearByPlace);
-                console.log(nearByPlaces)
+                setNearByPlaces(prevArr => [...prevArr, nearByPlace]);
+            
                 // info = document.createElement('div');
                 // info.innerHTML = place.name;
                 // info.innerHTML += `<a href="${_place.url}" target="_blank">Listing</a>`;
@@ -233,20 +233,28 @@ function App() {
   };
 
 const nearByPlacesDiv = nearByPlaces?.map((place) => {
+  console.log('running')
   return (
-    <div>
-      <div>
+    <div className='places_results'>  
+      <div style={{margin: '14px'}}>
         {place.name}
-      </div>
-      <div>
-        {place.url}
-      </div>
-      <div>
-        {place.website}
-      </div>
+      </div>  
+      <div style={{margin: '8px'}}>
+        <a href={place.url} target="_blank">
+          Listing
+        </a>
+      </div>  
+      <div style={{margin: '8px'}}>
+        <a href={place.website} target="_blank">
+          Website
+        </a>
+      </div >         
+      <button onClick={()=>console.log(place.name)} style={{margin: '8px'}}>Take Me There</button>   
     </div>
   )
-})
+}) 
+
+// console.log('NBP div',nearByPlacesDiv)
   return (
     <div className="App">
       <div className="nav">
@@ -275,8 +283,10 @@ const nearByPlacesDiv = nearByPlaces?.map((place) => {
           </button>
         </div>
           <div id="places">
-           {nearByPlacesDiv}
+            Where to??
+            {nearByPlacesDiv}
          </div>
+         
       </div>
       {/* <Inputs />
       <MapPannel /> */}
