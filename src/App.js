@@ -10,31 +10,36 @@ function App() {
   const [lastLat, setLastLat] = useState(0);
   const [lastLng, setLastLng] = useState(0);
   const [nearByPlaces, setNearByPlaces] = useState([]);
+  const [markers, setMarkers] = useState([]);
 
+  // console.log('dest, origin', dest, origin)
+  function addMarker(place) {
+    const marker = new window.google.maps.Marker({
+      position: place.geometry.location,
+      title: place.name,
+      map: map,
+    });
+    setMarkers([...markers, marker]);
+  }
 
-// console.log('dest, origin', dest, origin)
+  function hideMarkers() {
+    //still need to grab the halfway marker
+    // for (const mark in markers) {
+    //   mark.setMap(null);
+    // }
+  }
 
   useEffect(() => {
     if (origin) {
-      new window.google.maps.Marker({
-        position: origin.geometry.location,
-        title: origin.name,
-        map: map,
-      });
+      addMarker(origin);
     }
   }, [origin]);
 
-
   useEffect(() => {
     if (dest) {
-      new window.google.maps.Marker({
-        position: dest.geometry.location,
-        title: dest.name,
-        map: map,
-      });
+      addMarker(dest);
     }
   }, [dest]);
-
 
   useEffect(() => {
     const location = {
@@ -49,7 +54,6 @@ function App() {
       console.log('geo is here');
       navigator.geolocation.getCurrentPosition(
         (loc) => {
-         
           location.lat = loc.coords.latitude;
           location.lng = loc.coords.longitude;
 
@@ -96,15 +100,12 @@ function App() {
     setDirRender(new window.google.maps.DirectionsRenderer());
   }, []);
 
-
   // useEffect(() => {
   //   if (map) {
   //     const control = document.getElementById('floating-panel');
   //     map.controls[window.google.maps.ControlPosition.BOTTOM_RIGHT].push(control);
   //   }
   // }, [map]);
-
-
 
   const findLastStep = (halfWay, dir) => {
     let total = 0;
@@ -114,6 +115,7 @@ function App() {
       newSteps.push(step);
       total += step.distance.value;
       if (total > halfWay) {
+        //dig into last step and find halfway point for accuracy
         // console.log(i);
         // console.log(newSteps);
         return newSteps;
@@ -121,7 +123,33 @@ function App() {
     }
   };
 
-  function calculateAndDisplayRoute(directionsService, directionsRenderer) {
+  function takeMeThere(place) {
+    //name, used to be passed place.name
+    //need to include LNG / LAT data from generateNearByPlaces
+    console.log('TMT', place);
+    hideMarkers();
+    directionsService
+      .route({
+        origin: {
+          query: origin.name,
+        },
+        destination: {
+          lat: place.lat,
+          lng: place.lng,
+        },
+        travelMode: window.google.maps.TravelMode.WALKING,
+      })
+      .then((response) => {
+        console.log('THEN');
+        directionsRender.setMap(map);
+        directionsRender.setDirections(response);
+      });
+  }
+
+  function calculateAndDisplayRoute() {
+    console.log('dest', dest);
+    console.log('origin', origin);
+
     directionsService
       .route({
         origin: {
@@ -135,15 +163,15 @@ function App() {
         travelMode: window.google.maps.TravelMode.WALKING,
       })
       .then((response) => {
-        // console.log('response', response);
+        console.log('response', response);
         const steps = response.routes[0].legs[0].steps;
         const distance = response.routes[0].legs[0].distance.value;
         const half = distance / 2;
         let newSteps = findLastStep(half, steps);
         // console.log(distance, half);
         // console.log(steps);
-       // console.log(newSteps);
-  
+        // console.log(newSteps);
+
         response.routes[0].legs[0].steps = newSteps;
         //console.log(destination);
         const last = newSteps[newSteps.length - 1];
@@ -158,10 +186,12 @@ function App() {
           position: last.end_location,
           map: map,
         });
-        directionsRenderer.setMap(map);
-        directionsRenderer.setDirections(response);
+        directionsRender.setMap(map);
+        directionsRender.setDirections(response);
       })
-      .catch((e) => window.alert('Directions request failed due to ' + e.status));
+      .catch((e) =>
+        window.alert('Directions request failed due to ' + e.status)
+      );
     //second setting of directions
     // directionsService
     //   .route({
@@ -182,7 +212,7 @@ function App() {
     //   .catch((e) => window.alert("Directions request failed due to " + status));
   }
 
-  async function findPlaces (lat, lng) {
+  async function findPlaces(lat, lng) {
     // const placesDiv = document.querySelector('#places');
     // while (placesDiv.firstChild) {
     //   placesDiv.removeChild(placesDiv.firstChild);
@@ -193,7 +223,7 @@ function App() {
           `https://protected-brook-77403.herokuapp.com/https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat}%2C${lng}&radius=500&type=restaurant&key=${process.env.REACT_APP_API_KEY}`
         )
         .then((response) => {
-          //console.log(response.data);
+          // console.log(response.data);
           const places = response.data.results;
           const service = new window.google.maps.places.PlacesService(map);
           places.forEach((place) => {
@@ -206,14 +236,16 @@ function App() {
 
             function callback(_place, status) {
               if (status == window.google.maps.places.PlacesServiceStatus.OK) {
-                //console.log('place', place);
+                // console.log('place', place);
                 let nearByPlace = {
                   name: place.name,
                   url: _place.url,
                   website: _place.website,
-                }
-                setNearByPlaces(prevArr => [...prevArr, nearByPlace]);
-            
+                  lat: place.geometry.location.lat,
+                  lng: place.geometry.location.lng,
+                };
+                setNearByPlaces((prevArr) => [...prevArr, nearByPlace]);
+
                 // info = document.createElement('div');
                 // info.innerHTML = place.name;
                 // info.innerHTML += `<a href="${_place.url}" target="_blank">Listing</a>`;
@@ -230,63 +262,52 @@ function App() {
     } catch (err) {
       console.log(err);
     }
-  };
+  }
 
-const nearByPlacesDiv = nearByPlaces?.map((place) => {
-  console.log('running')
-  return (
-    <div className='places_results'>  
-      <div style={{margin: '14px'}}>
-        {place.name}
-      </div>  
-      <div style={{margin: '8px'}}>
-        <a href={place.url} target="_blank">
-          Listing
-        </a>
-      </div>  
-      <div style={{margin: '8px'}}>
-        <a href={place.website} target="_blank">
-          Website
-        </a>
-      </div >         
-      <button onClick={()=>console.log(place.name)} style={{margin: '8px'}}>Take Me There</button>   
-    </div>
-  )
-}) 
+  const nearByPlacesDiv = nearByPlaces?.map((place) => {
+    // console.log('running');
+    return (
+      <div className="places_results">
+        <div style={{ margin: '14px' }}>{place.name}</div>
+        <div style={{ margin: '8px' }}>
+          <a href={place.url} target="_blank">
+            Listing
+          </a>
+        </div>
+        <div style={{ margin: '8px' }}>
+          <a href={place.website} target="_blank">
+            Website
+          </a>
+        </div>
+        <button onClick={() => takeMeThere(place)} style={{ margin: '8px' }}>
+          Take Me There
+        </button>
+      </div>
+    );
+  });
 
-// console.log('NBP div',nearByPlacesDiv)
+  // console.log('NBP div',nearByPlacesDiv)
   return (
     <div className="App">
-      <div className="nav">
-        Logo
-      </div>
-     
+      <div className="nav">Logo</div>
+
       <div id="container">
-   
-      <div id="map"/>
-       
-      
+        <div id="map" />
+
         <div id="floating-panel">
           <input id="origin-input" placeholder="Location 1" />
           <input id="destination-input" placeholder="Location 2" />
-          <button 
-            id='get_route'
-            onClick={()=>calculateAndDisplayRoute(directionsService, directionsRender)}
-            >
-           Halfway Point
+          <button id="get_route" onClick={() => calculateAndDisplayRoute()}>
+            Halfway Point
           </button>
-          <button 
-            id='find_places'
-            onClick={()=>findPlaces(lastLat, lastLng)}
-            >
+          <button id="find_places" onClick={() => findPlaces(lastLat, lastLng)}>
             Find Places
           </button>
         </div>
-          <div id="places">
-            Where to??
-            {nearByPlacesDiv}
-         </div>
-         
+        <div id="places">
+          Where to??
+          {nearByPlacesDiv}
+        </div>
       </div>
       {/* <Inputs />
       <MapPannel /> */}
