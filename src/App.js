@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import logo from './logo.png';
 
 function App() {
   const [map, setMap] = useState(null);
@@ -269,7 +270,9 @@ function App() {
   // console.log('NBP div',nearByPlacesDiv)
   return (
     <div className="App">
-      <div className="nav">Logo</div>
+      <div className="nav">
+        <img src={logo} />
+      </div>
 
       <div id="container">
         <div id="map" />
@@ -284,7 +287,6 @@ function App() {
             Find Places
           </button>
         </div>
-        {nearByPlaces.length}
         <div id="places">
           Where to??
           {nearByPlacesDiv}
