@@ -153,35 +153,28 @@ function App() {
     directionsService
       .route({
         origin: {
-          query: origin.name,
+          lat: origin.geometry.location.lat(),
+          lng: origin.geometry.location.lng(),
         },
         destination: {
-          query: dest.name,
+          lat: dest.geometry.location.lat(),
+          lng: dest.geometry.location.lng(),
+          // query: dest.name,
           // query: "Amarillo",
         },
         //refactor for other modes of transport
         travelMode: window.google.maps.TravelMode.WALKING,
       })
       .then((response) => {
-        console.log('response', response);
+        // console.log('response', response);
         const steps = response.routes[0].legs[0].steps;
         const distance = response.routes[0].legs[0].distance.value;
         const half = distance / 2;
         let newSteps = findLastStep(half, steps);
-        // console.log(distance, half);
-        // console.log(steps);
-        // console.log(newSteps);
-
         response.routes[0].legs[0].steps = newSteps;
-        //console.log(destination);
         const last = newSteps[newSteps.length - 1];
-        // console.log('last', last);
-        // console.log('last lat', last.start_location.lat());
-        // console.log('last lat', last.start_location.lng());
         setLastLat(last.start_location.lat());
         setLastLng(last.start_location.lng());
-        // window.localStorage.setItem('lastLat', JSON.stringify(lastLat));
-        // window.localStorage.setItem('lastLng', JSON.stringify(lastLng));
         new window.google.maps.Marker({
           position: last.end_location,
           map: map,
@@ -192,31 +185,10 @@ function App() {
       .catch((e) =>
         window.alert('Directions request failed due to ' + e.status)
       );
-    //second setting of directions
-    // directionsService
-    //   .route({
-    //     origin: {
-    //       query: origin.name,
-    //     },
-    //     destination: {
-    //       // query: new destination,
-    //       query: "Central Park",
-    //     },
-    //     travelMode: google.maps.TravelMode.WALKING,
-    //   })
-    //   .then((response) => {
-    //     console.log("second response", response);
-    //     directionsRenderer.setMap(map);
-    //     directionsRenderer.setDirections(response);
-    //   })
-    //   .catch((e) => window.alert("Directions request failed due to " + status));
   }
 
   async function findPlaces(lat, lng) {
-    // const placesDiv = document.querySelector('#places');
-    // while (placesDiv.firstChild) {
-    //   placesDiv.removeChild(placesDiv.firstChild);
-    // }
+    setNearByPlaces([]);
     try {
       await axios
         .get(
@@ -304,6 +276,7 @@ function App() {
             Find Places
           </button>
         </div>
+        {nearByPlaces.length}
         <div id="places">
           Where to??
           {nearByPlacesDiv}
