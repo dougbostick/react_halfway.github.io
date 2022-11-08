@@ -22,7 +22,14 @@ function App() {
     setMarkers([...markers, marker]);
   }
 
+  function setMapOnAll(map){
+    for(const marker of markers){
+      marker.setMap(map);
+    }
+  }
+
   function hideMarkers() {
+    setMapOnAll(null)
     //still need to grab the halfway marker
     // for (const mark in markers) {
     //   mark.setMap(null);
@@ -175,10 +182,11 @@ function App() {
         const last = newSteps[newSteps.length - 1];
         setLastLat(last.start_location.lat());
         setLastLng(last.start_location.lng());
-        new window.google.maps.Marker({
+        const halfwayMark = new window.google.maps.Marker({
           position: last.end_location,
           map: map,
         });
+        setMarkers([...markers, halfwayMark]);
         directionsRender.setMap(map);
         directionsRender.setDirections(response);
       })
