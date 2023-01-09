@@ -12,6 +12,16 @@ function App() {
   const [lastLng, setLastLng] = useState(0);
   const [nearByPlaces, setNearByPlaces] = useState([]);
   const [markers, setMarkers] = useState([]);
+  const [message, setMessage] = useState('');
+
+  const getMessage = async () => {
+    const res = await axios.get('/message');
+    setMessage(res.data);
+  };
+
+  useEffect(() => {
+    getMessage();
+  }, [message]);
 
   // console.log('dest, origin', dest, origin)
   function addMarker(place) {
@@ -23,14 +33,14 @@ function App() {
     setMarkers([...markers, marker]);
   }
 
-  function setMapOnAll(map){
-    for(const marker of markers){
+  function setMapOnAll(map) {
+    for (const marker of markers) {
       marker.setMap(map);
     }
   }
 
   function hideMarkers() {
-    setMapOnAll(null)
+    setMapOnAll(null);
     //still need to grab the halfway marker
     // for (const mark in markers) {
     //   mark.setMap(null);
@@ -196,50 +206,65 @@ function App() {
       );
   }
 
+  const getPlaces = async (_lat, _lng, key) => {
+    try {
+      const res = await axios.get('/getPlaces', {
+        _lat,
+        _lng,
+        key,
+      });
+      return res.data;
+    } catch (err) {
+      console.log(err);
+    }
+  };
   async function findPlaces(lat, lng) {
     setNearByPlaces([]);
     try {
-      await axios
-        .get(
-          `https://protected-brook-77403.herokuapp.com/https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat}%2C${lng}&radius=500&type=restaurant&key=${process.env.REACT_APP_API_KEY}`
-        )
-        .then((response) => {
-          // console.log(response.data);
-          const places = response.data.results;
-          const service = new window.google.maps.places.PlacesService(map);
-          places.forEach((place) => {
-            const request = {
-              placeId: place.place_id,
-              fields: ['url', 'website'],
-            };
+      // await getPlaces(lat, lng, process.env.REACT_APP_API_KEY)
+      // await axios
+      //   .get(
+      //     //https://protected-brook-77403.herokuapp.com/
+      //     `https://github.com/Freeboard/thingproxy/https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat}%2C${lng}&radius=500&type=restaurant&key=${process.env.REACT_APP_API_KEY}`
+      //   )
+      const key = process.env.REACT_APP_API_KEY;
+      await axios.post(`/getPlaces`, { lat, lng, key }).then((response) => {
+        console.log(response.data);
+        const places = response.data.results;
+        const service = new window.google.maps.places.PlacesService(map);
+        places.forEach((place) => {
+          const request = {
+            placeId: place.place_id,
+            fields: ['url', 'website'],
+          };
 
-            service.getDetails(request, callback);
+          service.getDetails(request, callback);
 
-            function callback(_place, status) {
-              if (status == window.google.maps.places.PlacesServiceStatus.OK) {
-                // console.log('place', place);
-                let nearByPlace = {
-                  name: place.name,
-                  url: _place.url,
-                  website: _place.website,
-                  lat: place.geometry.location.lat,
-                  lng: place.geometry.location.lng,
-                };
-                setNearByPlaces((prevArr) => [...prevArr, nearByPlace]);
+          function callback(_place, status) {
+            if (status == window.google.maps.places.PlacesServiceStatus.OK) {
+              // console.log('place', place);
+              let nearByPlace = {
+                name: place.name,
+                url: _place.url,
+                website: _place.website,
+                lat: place.geometry.location.lat,
+                lng: place.geometry.location.lng,
+              };
+              setNearByPlaces((prevArr) => [...prevArr, nearByPlace]);
 
-                // info = document.createElement('div');
-                // info.innerHTML = place.name;
-                // info.innerHTML += `<a href="${_place.url}" target="_blank">Listing</a>`;
-                // info.innerHTML += `<a href="${_place.website}" target="_blank">Website</a>`;
-                // // info.innerHTML += `<button onClick=takeMe(${place.name})>Take Me There</button>`;
-                // placesDiv.appendChild(info);
-                // // takeMe = (place) => {
-                // //   console.log(`take me to ${place}`);
-                // // };
-              }
+              // info = document.createElement('div');
+              // info.innerHTML = place.name;
+              // info.innerHTML += `<a href="${_place.url}" target="_blank">Listing</a>`;
+              // info.innerHTML += `<a href="${_place.website}" target="_blank">Website</a>`;
+              // // info.innerHTML += `<button onClick=takeMe(${place.name})>Take Me There</button>`;
+              // placesDiv.appendChild(info);
+              // // takeMe = (place) => {
+              // //   console.log(`take me to ${place}`);
+              // // };
             }
-          });
+          }
         });
+      });
     } catch (err) {
       console.log(err);
     }
@@ -273,7 +298,7 @@ function App() {
       <div className="nav">
         <img src={logo} />
       </div>
-
+      {message ? message : 'no message'}
       <div id="container">
         <div id="map" />
 
